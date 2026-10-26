@@ -1,0 +1,20 @@
+@startuml
+
+:Student: as user
+
+package "Study App" {
+  package "Study Space" {
+    package "Quiz mode" {
+      usecase (Answer question) as answer_quiz_question
+
+      usecase (View Answer) as view_quiz_answer
+
+      usecase (Skip Question) as skip_quiz_question
+
+      user -- answer_quiz_question
+      user -- view_quiz_answer
+      user -- skip_quiz_question
+    }
+  }
+}
+@enduml

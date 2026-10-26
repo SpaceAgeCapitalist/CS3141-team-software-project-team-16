@@ -1,0 +1,46 @@
+@startuml
+
+:Student: as user
+
+package "Study App" {
+  package "Study Space" {
+    usecase (Add file) as add_file
+      usecase (File upload) as file_upload
+      add_file <|-- (file_upload)
+      usecase (Folder upload) as folder_upload
+      add_file <|-- (folder_upload)
+      usecase (Create Folder) as create_folder
+      add_file <|-- (create_folder)
+      usecase (Create File) as create_file
+      add_file <|-- (create_file)
+        usecase (Create CardDeck) as create_carddeck
+        create_file <|-- (create_carddeck)
+
+    usecase (View file) as view_file
+
+    usecase (Edit file) as edit_file
+      usecase (Edit CardDeck) as edit_carddeck
+      edit_file <|-- (edit_carddeck)
+
+    usecase (Select file) as select_file
+    note "Selecting a file by right clicking\non it opens a drop-down menu\nwhere file use cases are listed." as select_file_note
+    select_file .. select_file_note
+
+    usecase (Delete file) as delete_file
+    delete_file.> select_file: include
+
+    usecase (Search for file) as search_files
+
+    usecase (Take quiz) as take_quiz
+    take_quiz .> select_file: include
+    
+    user -- add_file
+    user -- view_file
+    user -- edit_file
+    user -- select_file
+    user -- delete_file
+    user -- search_files
+    user -- take_quiz
+  }
+}
+@enduml

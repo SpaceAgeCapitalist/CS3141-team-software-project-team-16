@@ -1,0 +1,39 @@
+@startuml
+
+:Student: as user
+
+package "Study App" {
+  package "Study Space" {
+    usecase (Search for file) as search_files
+
+    package "Flash card editor" {
+      usecase (Create card) as create_card
+
+      usecase (Delete card) as delete_card
+
+      usecase (Move card) as move_card
+
+      usecase (Add context) as add_context
+        usecase (Add text box) as add_text_context
+        add_context<|-- (add_text_context)
+        usecase (Add image) as add_image_context
+        add_context<|-- (add_image_context)
+        add_image_context .> search_files: include
+    
+      usecase (Remove context) as remove_context
+
+      note "Context are elements that can\nbe placed on flashcards.\nAn image stored within the deck's\nstudy space can be used as context\nand will appear on the card." as context_note
+      add_context .. context_note
+      remove_context .. context_note
+
+      user -- create_card
+      user -- delete_card
+      user -- move_card
+      user -- add_context
+      user -- remove_context
+    }
+   
+    user -- search_files
+  }
+}
+@enduml

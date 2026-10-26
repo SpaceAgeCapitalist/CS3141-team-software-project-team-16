@@ -1,0 +1,120 @@
+@startuml
+
+:Student: as user
+
+package "Study App" {
+  usecase (Add space) as add_space
+    usecase (Create space) as create_space
+    add_space <|-- (create_space)
+    usecase (Import space) as import_space
+    add_space <|-- (import_space)
+
+  usecase (Delete space) as delete_space
+
+  usecase (Edit space) as edit_space
+    usecase (Rename) as rename_space
+    edit_space<|-- (rename_space)
+    usecase (Change color) as space_change_color
+    edit_space<|-- (space_change_color)
+
+  usecase (Export space) as export_space
+
+  usecase (Open space) as open_space
+
+  usecase (Add integration) as add_integration
+
+  usecase (Remove integration) as remove_integration
+
+  note "Integrations allow the app\nto interpret different kinds of files.\nAdding an integration tells\nthe app what external app to use to\nview and/or edit a type of file." as note_integration
+  note_integration .. add_integration
+  note_integration .. remove_integration
+
+  package "Study Space" {
+    usecase (Add file) as add_file
+      usecase (File upload) as file_upload
+      add_file <|-- (file_upload)
+      usecase (Folder upload) as folder_upload
+      add_file <|-- (folder_upload)
+      usecase (Create Folder) as create_folder
+      add_file <|-- (create_folder)
+      usecase (Create File) as create_file
+      add_file <|-- (create_file)
+        usecase (Create CardDeck) as create_carddeck
+        create_file <|-- (create_carddeck)
+
+    usecase (View file) as view_file
+
+    usecase (Edit file) as edit_file
+      usecase (Edit CardDeck) as edit_carddeck
+      edit_file <|-- (edit_carddeck)
+
+    usecase (Select file) as select_file
+    note "Selecting a file by right clicking\non it opens a drop-down menu\nwhere file use cases are listed." as select_file_note
+    select_file .. select_file_note
+
+    usecase (Delete file) as delete_file
+    delete_file.> select_file: include
+
+    usecase (Search for file) as search_files
+
+    usecase (Take quiz) as take_quiz
+    take_quiz .> select_file: include
+
+    package "Flash card editor" {
+      usecase (Create card) as create_card
+
+      usecase (Delete card) as delete_card
+
+      usecase (Move card) as move_card
+
+      usecase (Add context) as add_context
+        usecase (Add text box) as add_text_context
+        add_context<|-- (add_text_context)
+        usecase (Add image) as add_image_context
+        add_context<|-- (add_image_context)
+        add_image_context .> search_files: include
+    
+      usecase (Remove context) as remove_context
+
+      note "Context are elements that can\nbe placed on flashcards.\nAn image stored within the deck's\nstudy space can be used as context\nand will appear on the card." as context_note
+      add_context .. context_note
+      remove_context .. context_note
+
+      user -- create_card
+      user -- delete_card
+      user -- move_card
+      user -- add_context
+      user -- remove_context
+    }
+
+    package "Quiz mode" {
+      usecase (Answer question) as answer_quiz_question
+
+      usecase (View Answer) as view_quiz_answer
+
+      usecase (Skip Question) as skip_quiz_question
+
+      user -- answer_quiz_question
+      user -- view_quiz_answer
+      user -- skip_quiz_question
+    }
+    
+    
+    user -- add_file
+    user -- view_file
+    user -- edit_file
+    user -- select_file
+    user -- delete_file
+    user -- search_files
+    user -- take_quiz
+  }
+
+  user -- add_space
+  user -- delete_space
+  user -- edit_space
+  user -- export_space
+  user -- open_space
+  user -- add_integration
+  user -- remove_integration
+}
+@enduml
