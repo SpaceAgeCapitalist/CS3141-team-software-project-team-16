@@ -2,24 +2,15 @@ package io.github.spaceage_capitalist;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.nio.file.StandardCopyOption;
 
 public class SpaceStorage {
-
-    public static final String QUIZ_EXTENSION = ".quiz";
 
     private static final Path ROOT =
             Paths.get(System.getProperty("user.home"), "StudyApp", "spaces");
@@ -87,52 +78,5 @@ public class SpaceStorage {
 
     public static void deleteFile(Path file) throws IOException {
         Files.delete(file);
-    }
-
-    //Quizzes
-    // A quiz is stored as one "<name>.quiz" file inside its study space folder.
-
-    public static boolean isQuizFile(Path file) {
-        return file.getFileName().toString().toLowerCase().endsWith(QUIZ_EXTENSION);
-    }
-
-    /** The file name without the .quiz extension. */
-    public static String quizName(Path file) {
-        String n = file.getFileName().toString();
-        return n.substring(0, n.length() - QUIZ_EXTENSION.length());
-    }
-
-    public static boolean quizExists(String space, String quizName) {
-        return Files.exists(ROOT.resolve(space).resolve(quizName.trim() + QUIZ_EXTENSION));
-    }
-
-    /** Returns false if a quiz with that name already exists in the space. */
-    public static boolean saveQuiz(String space, Quiz quiz) throws IOException {
-        Path dest = ROOT.resolve(space).resolve(quiz.getName().trim() + QUIZ_EXTENSION);
-        try (Writer w = Files.newBufferedWriter(dest, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW)) {
-            quiz.toProperties().store(w, "Study App quiz");
-        } catch (FileAlreadyExistsException e) {
-            return false;
-        }
-        return true;
-    }
-
-    /** Replaces an existing quiz with new contents. Writes to a temp file first so a crash can't leave a half-written quiz. */
-    public static void updateQuiz(String space, Quiz quiz) throws IOException {
-        String base = quiz.getName().trim() + QUIZ_EXTENSION;
-        Path dest = ROOT.resolve(space).resolve(base);
-        Path temp = ROOT.resolve(space).resolve(base + ".tmp");
-        try (Writer w = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
-            quiz.toProperties().store(w, "Study App quiz");
-        }
-        Files.move(temp, dest, StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    public static Quiz loadQuiz(Path file) throws IOException {
-        Properties p = new Properties();
-        try (Reader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            p.load(r);
-        }
-        return Quiz.fromProperties(quizName(file), p);
     }
 }

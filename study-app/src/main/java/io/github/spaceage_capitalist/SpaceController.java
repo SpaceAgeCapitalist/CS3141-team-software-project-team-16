@@ -24,16 +24,11 @@ public class SpaceController {
 
     @FXML
     private void initialize() {
-        // Right-click on empty space -> "Add File" / "New Quiz"
+        // Right-click on empty space -> "Add File"
         ContextMenu menu = new ContextMenu();
-
         MenuItem addFile = new MenuItem("Add File");
         addFile.setOnAction(e -> addFile());
-
-        MenuItem newQuiz = new MenuItem("New Quiz");
-        newQuiz.setOnAction(e -> newQuiz());
-
-        menu.getItems().addAll(addFile, newQuiz);
+        menu.getItems().add(addFile);
 
         root.setOnContextMenuRequested(e -> {
             menu.show(root, e.getScreenX(), e.getScreenY());
@@ -62,6 +57,7 @@ public class SpaceController {
         File chosen = chooser.showOpenDialog(root.getScene().getWindow());
         if (chosen == null) return;
 
+        // Suggest the original name (minus extension) as a starting point
         String original = chosen.getName();
         int dot = original.lastIndexOf('.');
         String suggestion = dot > 0 ? original.substring(0, dot) : original;
@@ -83,52 +79,12 @@ public class SpaceController {
         });
     }
 
-    /** Asks for a quiz name, then opens the quiz editor page. */
-    private void newQuiz() {
-        Dialogs.askName("New Quiz", "Name your quiz", "").ifPresent(name -> {
-            if (!SpaceStorage.isValidName(name)) {
-                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
-                return;
-            }
-            if (SpaceStorage.quizExists(spaceName, name)) {
-                Dialogs.error("A quiz with that name already exists in this study space.");
-                return;
-            }
-            try {
-                App.showQuizEditor(spaceName, name.trim());
-            } catch (IOException ex) {
-                Dialogs.error("Could not open the quiz editor: " + ex.getMessage());
-            }
-        });
-    }
-        private void editQuiz(Path file) {
-        try {
-            Quiz quiz = SpaceStorage.loadQuiz(file);
-            App.showQuizEditor(spaceName, quiz);
-        } catch (IOException ex) {
-            Dialogs.error("Could not open quiz for editing: " + ex.getMessage());
-        }
-    }
-
     private void openFile(Path file) {
-        // Quizzes are not opened by another program. Taking a quiz is a later story,
-        // so for now show a short summary to confirm what was saved.
-        if (SpaceStorage.isQuizFile(file)) {
-            try {
-                Quiz quiz = SpaceStorage.loadQuiz(file);
-                int n = quiz.getQuestions().size();
-                Dialogs.info("Quiz: " + quiz.getName() + "\n" + n + (n == 1 ? " question" : " questions")
-                        + "\n\nTaking quizzes is coming in a later update.");
-            } catch (IOException ex) {
-                Dialogs.error("Could not read quiz: " + ex.getMessage());
-            }
-            return;
-        }
-
         if (!Desktop.isDesktopSupported()) {
             Dialogs.error("Opening files isn't supported on this system.");
             return;
         }
+        // Run off the JavaFX thread so the app doesn't freeze while the other program launches
         new Thread(() -> {
             try {
                 Desktop.getDesktop().open(file.toFile());
@@ -139,10 +95,7 @@ public class SpaceController {
     }
 
     private void deleteFile(Path file) {
-        String label = SpaceStorage.isQuizFile(file)
-                ? "quiz \"" + SpaceStorage.quizName(file) + "\""
-                : "\"" + file.getFileName() + "\"";
-        if (!Dialogs.confirm("Delete " + label + "?")) return;
+        if (!Dialogs.confirm("Delete \"" + file.getFileName() + "\"?")) return;
         try {
             SpaceStorage.deleteFile(file);
             refresh();
@@ -155,20 +108,12 @@ public class SpaceController {
         fileContainer.getChildren().clear();
         try {
             for (Path file : SpaceStorage.listFiles(spaceName)) {
-                String text = SpaceStorage.isQuizFile(file)
-                        ? "Quiz: " + SpaceStorage.quizName(file)
-                        : file.getFileName().toString();
-                Button b = new Button(text);
+                Button b = new Button(file.getFileName().toString());
                 b.setPrefSize(140, 90);
                 b.setWrapText(true);
                 b.setOnAction(e -> openFile(file));
 
                 ContextMenu menu = new ContextMenu();
-                if (SpaceStorage.isQuizFile(file)) {
-                    MenuItem edit = new MenuItem("Edit");
-                    edit.setOnAction(e -> editQuiz(file));
-                    menu.getItems().add(edit);
-                }
                 MenuItem delete = new MenuItem("Delete");
                 delete.setOnAction(e -> deleteFile(file));
                 menu.getItems().add(delete);

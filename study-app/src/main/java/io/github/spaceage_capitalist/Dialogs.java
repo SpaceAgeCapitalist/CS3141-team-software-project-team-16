@@ -12,10 +12,6 @@ public class Dialogs {
         new Alert(Alert.AlertType.ERROR, message).showAndWait();
     }
 
-    public static void info(String message) {
-        new Alert(Alert.AlertType.INFORMATION, message).showAndWait();
-    }
-
     public static boolean confirm(String message) {
         Optional<ButtonType> r = new Alert(Alert.AlertType.CONFIRMATION, message).showAndWait();
         return r.isPresent() && r.get() == ButtonType.OK;
