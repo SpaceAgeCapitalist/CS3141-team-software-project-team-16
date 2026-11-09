@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.spaceage_capitalist.FlashcardController"
+      spacing="10"
+      prefWidth="500"
+      prefHeight="450">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label fx:id="setNameLabel" text="Flashcard Set"/>
+    <Label fx:id="cardNumberLabel" text="Card 1 of 1"/>
+
+    <Label text="Front"/>
+    <TextArea fx:id="frontTextArea"
+              promptText="Enter the front of the card"
+              wrapText="true"
+              prefRowCount="4"
+              VBox.vgrow="ALWAYS"/>
+
+    <Label text="Back"/>
+    <TextArea fx:id="backTextArea"
+              promptText="Enter the back of the card"
+              wrapText="true"
+              prefRowCount="4"
+              VBox.vgrow="ALWAYS"/>
+
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="← Previous" onAction="#previousCard"/>
+        <Button text="Next / Add →" onAction="#nextCard"/>
+        <Button text="Delete Card" onAction="#deleteCard"/>
+        <Button text="Finish" onAction="#finish"/>
+    </HBox>
+
+</VBox>
