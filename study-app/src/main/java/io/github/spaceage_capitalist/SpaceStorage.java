@@ -17,6 +17,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.nio.file.StandardCopyOption;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.io.OutputStream;
+import java.nio.file.StandardCopyOption;
+import java.util.Properties;
+import java.io.InputStream;
+import java.util.ArrayList;
+
 public class SpaceStorage {
 
     public static final String QUIZ_EXTENSION = ".quiz";
@@ -31,6 +39,9 @@ public class SpaceStorage {
             throw new RuntimeException("Could not create data folder", e);
         }
     }
+
+    //map decleration 
+    private static Map<String, Map<String, Flashcards>> flashcardSets = new HashMap<>();
 
     /** Names become file/folder names, so reject anything that could break or escape the folder. */
     public static boolean isValidName(String name) {
@@ -64,6 +75,9 @@ public class SpaceStorage {
                 Files.delete(p);
             }
         }
+
+        //include removing flashcards
+        flashcardSets.remove(name);
     }
 
     public static List<Path> listFiles(String space) throws IOException {
@@ -89,6 +103,214 @@ public class SpaceStorage {
         Files.delete(file);
     }
 
+    //start of logic for HashMap
+    private static Map<String, Flashcards> getSetsForSpace(String space)
+        throws IOException {
+
+        if (!flashcardSets.containsKey(space)) {
+            Map<String, Flashcards> sets = readFlashcardSets(space);
+            flashcardSets.put(space, sets);
+        }
+
+        return flashcardSets.get(space);
+    }   
+
+    public static boolean addFlashcardSet(String space, Flashcards set)
+        throws IOException {
+
+        Map<String, Flashcards> sets = getSetsForSpace(space);
+
+        if (sets.containsKey(set.getName())) {
+            return false;
+        }
+
+        Map<String, Flashcards> updatedSets = new HashMap<>(sets);
+        updatedSets.put(set.getName(), set);
+
+        writeFlashcardSets(space, updatedSets);
+        flashcardSets.put(space, updatedSets);
+
+        return true;
+    }
+
+    private static void writeFlashcardSets(String space, 
+        Map<String, Flashcards> sets) throws IOException {
+
+        Path spaceFolder = ROOT.resolve(space);
+
+        if(!Files.isDirectory(spaceFolder)) {
+            throw new IOException("The study space no longer exists.");
+        }
+    
+        Path folder = spaceFolder.resolve(".flashcards");
+        Files.createDirectories(folder);
+
+        Properties data = new Properties();
+        data.setProperty("setCount", String.valueOf(sets.size()));
+
+        int setIndex = 0;
+
+        for(Flashcards set : sets.values()) {
+            String prefix = "set." + setIndex + ".";
+
+            data.setProperty(prefix + "name", set.getName());
+            data.setProperty(prefix + "cardCount", String.valueOf(set.getCardCount()));
+
+            for (int i = 0; i < set.getCardCount(); i++) {
+                Flashcards.Card card = set.getCard(i);
+                data.setProperty(prefix + "front." + i, card.getFront());
+                data.setProperty(prefix + "back." + i, card.getBack());
+            }
+
+            setIndex++;
+        }
+
+        Path file = folder.resolve("sets.xml");
+        Path temporaryFile = Files.createTempFile(folder, "sets-", ".tmp");
+
+        try{
+            try (OutputStream output = Files.newOutputStream(temporaryFile)) {
+                data.storeToXML(output, "Study App Flashcards", "UTF-8");
+            }
+
+            Files.move(
+            temporaryFile,
+            file,
+            StandardCopyOption.REPLACE_EXISTING
+        );
+        } 
+        finally {
+            Files.deleteIfExists(temporaryFile);
+        }
+    }
+    private static String readRequiredProperty(Properties data, String key)
+        throws IOException {
+
+        String value = data.getProperty(key);
+
+        if (value == null) {
+            throw new IOException("Missing flashcard data: " + key);
+        }
+
+        return value;
+    }
+
+    private static Map<String, Flashcards> readFlashcardSets(String space)
+        throws IOException {
+
+        Map<String, Flashcards> sets = new HashMap<>();
+
+        Path file = ROOT.resolve(space)
+                .resolve(".flashcards")
+                .resolve("sets.xml");
+
+        if (Files.notExists(file)) {
+            return sets;
+        }
+
+        Properties data = new Properties();
+
+        try (InputStream input = Files.newInputStream(file)) {
+            data.loadFromXML(input);
+        }
+
+        try {
+            int setCount = Integer.parseInt(
+                readRequiredProperty(data, "setCount")
+            );
+
+            if (setCount < 0) {
+                throw new IOException("Invalid flashcard set count.");
+            }
+
+            for (int setIndex = 0; setIndex < setCount; setIndex++) {
+                String prefix = "set." + setIndex + ".";
+
+                String name = readRequiredProperty(data, prefix + "name");
+
+                if (!isValidName(name) || sets.containsKey(name)) {
+                    throw new IOException("Invalid or duplicate set name.");
+                }
+
+                Flashcards set = new Flashcards(name);
+
+                int cardCount = Integer.parseInt(
+                    readRequiredProperty(data, prefix + "cardCount")
+                );
+
+                if (cardCount < 0) {
+                    throw new IOException("Invalid flashcard count.");
+                }
+
+                for (int i = 0; i < cardCount; i++) {
+                    String front = readRequiredProperty(
+                        data, prefix + "front." + i
+                    );
+
+                    String back = readRequiredProperty(
+                        data, prefix + "back." + i
+                    );
+
+                    set.addCard(front, back);
+                }
+
+                sets.put(name, set);
+            }
+
+        } catch (NumberFormatException ex) {
+            throw new IOException("Invalid number in flashcard data.", ex);
+        }
+
+        return sets;
+    }
+
+    public static List<Flashcards> listFlashcardSets(String space)
+        throws IOException {
+
+        List<Flashcards> sets = new ArrayList<>(
+            getSetsForSpace(space).values()
+        );
+
+        sets.sort(Comparator.comparing(
+            Flashcards::getName, String.CASE_INSENSITIVE_ORDER
+        ));
+
+        return sets;
+    }
+
+    public static boolean hasFlashcardSet(String space, String name)
+            throws IOException {
+
+        return getSetsForSpace(space).containsKey(name);
+    }
+
+    public static void updateFlashcardSet(String space, Flashcards set)
+            throws IOException {
+
+        Map<String, Flashcards> sets = getSetsForSpace(space);
+
+        if (!sets.containsKey(set.getName())) {
+            throw new IOException("This flashcard set no longer exists.");
+        }
+
+        Map<String, Flashcards> updatedSets = new HashMap<>(sets);
+        updatedSets.put(set.getName(), set);
+
+        writeFlashcardSets(space, updatedSets);
+        flashcardSets.put(space, updatedSets);
+    }
+
+    public static void deleteFlashcardSet(String space, String name)
+            throws IOException {
+
+        Map<String, Flashcards> sets = getSetsForSpace(space);
+
+        Map<String, Flashcards> updatedSets = new HashMap<>(sets);
+        updatedSets.remove(name);
+
+        writeFlashcardSets(space, updatedSets);
+        flashcardSets.put(space, updatedSets);
+    }
     //Quizzes
     // A quiz is stored as one "<name>.quiz" file inside its study space folder.
 
