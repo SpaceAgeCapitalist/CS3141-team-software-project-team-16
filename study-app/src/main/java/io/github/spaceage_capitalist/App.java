@@ -37,6 +37,24 @@ public class App extends Application {
         stage.setTitle(name);
     }
 
+    static void showQuizEditor(String spaceName, String quizName) throws IOException {
+        FXMLLoader loader = new FXMLLoader(App.class.getResource("quiz_editor.fxml"));
+        Parent root = loader.load();
+        QuizEditorController controller = loader.getController();
+        controller.setQuiz(spaceName, quizName);
+        scene.setRoot(root);
+        stage.setTitle("New Quiz - " + quizName);
+    }
+
+        static void showQuizEditor(String spaceName, Quiz quiz) throws IOException {
+        FXMLLoader loader = new FXMLLoader(App.class.getResource("quiz_editor.fxml"));
+        Parent root = loader.load();
+        QuizEditorController controller = loader.getController();
+        controller.editQuiz(spaceName, quiz);
+        scene.setRoot(root);
+        stage.setTitle("Edit Quiz - " + quiz.getName());
+    }
+
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
