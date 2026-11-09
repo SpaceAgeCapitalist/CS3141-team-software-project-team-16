@@ -76,6 +76,13 @@ public class SpaceStorage {
         return true;
     }
 
+    public static boolean createTextFile(String space, String name) throws IOException {
+        Path dest = ROOT.resolve(space).resolve(name.trim() + ".txt");
+        if (Files.exists(dest)) return false;
+        Files.createFile(dest);
+        return true;
+    }
+
     public static void deleteFile(Path file) throws IOException {
         Files.delete(file);
     }

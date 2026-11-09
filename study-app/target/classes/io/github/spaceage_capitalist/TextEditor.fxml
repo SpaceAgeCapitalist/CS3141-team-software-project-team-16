@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: e;" xmlns="http://javafx.com/javafx/13" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.github.spaceage_capitalist.TextEditorController">
+   <children>
+      <AnchorPane fx:id="top_bar" accessibleRole="MENU_BAR" layoutX="100.0" layoutY="75.0" prefHeight="40.0" style="-fx-background-color: #ebebeb;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Button fx:id="return_button" maxHeight="24.0" minHeight="10.0" mnemonicParsing="false" onAction="#returnToSpace" prefHeight="25.0" text="Return to study space" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="8.0" />
+            <Label fx:id="file_name" layoutX="14.0" layoutY="12.0" text="file.txt" />
+         </children>
+      </AnchorPane>
+      <TextArea fx:id="text_box" layoutX="68.0" layoutY="91.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="2.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="42.0" />
+   </children>
+</AnchorPane>

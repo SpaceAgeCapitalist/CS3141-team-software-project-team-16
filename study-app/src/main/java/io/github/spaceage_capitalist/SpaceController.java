@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Locale;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -26,9 +27,14 @@ public class SpaceController {
     private void initialize() {
         // Right-click on empty space -> "Add File"
         ContextMenu menu = new ContextMenu();
+
         MenuItem addFile = new MenuItem("Add File");
         addFile.setOnAction(e -> addFile());
         menu.getItems().add(addFile);
+
+        MenuItem createTextFile = new MenuItem("Create Text File");
+        createTextFile.setOnAction(e -> createTextFile());
+        menu.getItems().add(createTextFile);
 
         root.setOnContextMenuRequested(e -> {
             menu.show(root, e.getScreenX(), e.getScreenY());
@@ -79,11 +85,40 @@ public class SpaceController {
         });
     }
 
+    private void createTextFile() {
+        Dialogs.askName("Create a text file", "What should this file be called?", "New Text File").ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
+                return;
+            }
+            try {
+                if (!SpaceStorage.createTextFile(spaceName, name)) {
+                    Dialogs.error("A file with that name already exists in this study space.");
+                    return;
+                }
+                refresh();
+            } catch (IOException ex) {
+                Dialogs.error("Could not create text file: " + ex.getMessage());
+            }
+        });
+    }
+
     private void openFile(Path file) {
+        if (file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".txt")) {
+            try {
+                App.showTextEditor(file, spaceName);
+            } catch (IOException ex) {
+                Dialogs.error("Could not open text file: " + ex.getMessage());
+            }
+            return;
+        }
+
         if (!Desktop.isDesktopSupported()) {
             Dialogs.error("Opening files isn't supported on this system.");
             return;
         }
+
+
         // Run off the JavaFX thread so the app doesn't freeze while the other program launches
         new Thread(() -> {
             try {

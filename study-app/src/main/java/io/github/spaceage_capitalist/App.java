@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class App extends Application {
 
@@ -39,6 +40,15 @@ public class App extends Application {
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
+    }
+
+    static void showTextEditor(Path filePath, String spaceName) throws IOException {
+        FXMLLoader loader = new FXMLLoader(App.class.getResource("TextEditor.fxml"));
+        Parent root = loader.load();
+        TextEditorController controller = loader.getController();
+        controller.setFile(filePath, spaceName);
+        scene.setRoot(root);
+        stage.setTitle(filePath.getFileName().toString());
     }
 
     public static void main(String[] args) {
