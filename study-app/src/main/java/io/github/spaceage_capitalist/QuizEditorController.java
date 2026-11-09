@@ -72,7 +72,7 @@ public class QuizEditorController {
             cards.get(i).setNumber(i + 1);
         }
     }
-
+    
     @FXML
     private void saveQuiz() {
         if (cards.isEmpty()) {

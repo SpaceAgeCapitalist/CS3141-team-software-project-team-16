@@ -53,7 +53,15 @@ public class App extends Application {
         scene.setRoot(root);
         stage.setTitle("Edit Quiz - " + quiz.getName());
     }
-
+    
+    static void showQuizTaker(String spaceName, Quiz quiz) throws IOException {
+        FXMLLoader loader = new FXMLLoader(App.class.getResource("quiz_taker.fxml"));
+        Parent root = loader.load();
+        QuizTakerController controller = loader.getController();
+        controller.takeQuiz(spaceName, quiz);
+        scene.setRoot(root);
+        stage.setTitle("Take Quiz - " + quiz.getName());
+    }
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();

@@ -29,6 +29,7 @@ public class Question {
     private List<String> options = new ArrayList<>(); // multiple choice only
     private int correctIndex = -1;                    // multiple choice: option index; true/false: 0 = True, 1 = False
     private String answer = "";                       // short answer only
+    private boolean isAnswered = false;               // whether the question has been answered (used in quiz mode)
 
     public Type getType() { return type; }
     public void setType(Type type) { this.type = type; }
@@ -44,6 +45,9 @@ public class Question {
 
     public String getAnswer() { return answer; }
     public void setAnswer(String answer) { this.answer = answer; }
+
+    public boolean isAnswered() { return isAnswered; }
+    public void setAnswered(boolean answered) { isAnswered = answered; }
 
     /** Returns null if the question is complete, otherwise a message saying what is missing. */
     public String validate() {
@@ -128,5 +132,9 @@ public class Question {
             throw new IllegalArgumentException("Missing " + key);
         }
         return v;
+    }
+    public Object getAnswers() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAnswers'");
     }
 }

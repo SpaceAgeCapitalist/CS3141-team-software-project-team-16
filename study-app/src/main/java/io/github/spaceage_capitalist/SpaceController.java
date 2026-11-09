@@ -101,7 +101,7 @@ public class SpaceController {
             }
         });
     }
-        private void editQuiz(Path file) {
+    private void editQuiz(Path file) {
         try {
             Quiz quiz = SpaceStorage.loadQuiz(file);
             App.showQuizEditor(spaceName, quiz);
@@ -111,14 +111,11 @@ public class SpaceController {
     }
 
     private void openFile(Path file) {
-        // Quizzes are not opened by another program. Taking a quiz is a later story,
-        // so for now show a short summary to confirm what was saved.
         if (SpaceStorage.isQuizFile(file)) {
             try {
                 Quiz quiz = SpaceStorage.loadQuiz(file);
                 int n = quiz.getQuestions().size();
-                Dialogs.info("Quiz: " + quiz.getName() + "\n" + n + (n == 1 ? " question" : " questions")
-                        + "\n\nTaking quizzes is coming in a later update.");
+                App.showQuizTaker(spaceName, quiz);
             } catch (IOException ex) {
                 Dialogs.error("Could not read quiz: " + ex.getMessage());
             }
