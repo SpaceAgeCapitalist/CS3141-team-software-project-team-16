@@ -147,7 +147,6 @@ public class SpaceController {
         if (SpaceStorage.isQuizFile(file)) {
             try {
                 Quiz quiz = SpaceStorage.loadQuiz(file);
-                int n = quiz.getQuestions().size();
                 App.showQuizTaker(spaceName, quiz);
             } catch (IOException ex) {
                 Dialogs.error("Could not read quiz: " + ex.getMessage());
