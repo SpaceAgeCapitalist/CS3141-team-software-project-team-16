@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Locale;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -13,6 +14,10 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 public class SpaceController {
 
@@ -27,6 +32,7 @@ public class SpaceController {
         // Right-click on empty space -> "Add File" / "New Quiz"
         ContextMenu menu = new ContextMenu();
 
+
         MenuItem addFile = new MenuItem("Add File");
         addFile.setOnAction(e -> addFile());
 
@@ -34,6 +40,15 @@ public class SpaceController {
         newQuiz.setOnAction(e -> newQuiz());
 
         menu.getItems().addAll(addFile, newQuiz);
+
+        // Right-click on empty space -> "New Flashcard Set"
+        MenuItem newFlashcards = new MenuItem("New Flashcard Set");
+        newFlashcards.setOnAction(e -> createFlashcardSet());
+        menu.getItems().add(newFlashcards);
+
+        MenuItem createTextFile = new MenuItem("Create Text File");
+        createTextFile.setOnAction(e -> createTextFile());
+        menu.getItems().add(createTextFile);
 
         root.setOnContextMenuRequested(e -> {
             menu.show(root, e.getScreenX(), e.getScreenY());
@@ -110,6 +125,24 @@ public class SpaceController {
         }
     }
 
+    private void createTextFile() {
+        Dialogs.askName("Create a text file", "What should this file be called?", "New Text File").ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
+                return;
+            }
+            try {
+                if (!SpaceStorage.createTextFile(spaceName, name)) {
+                    Dialogs.error("A file with that name already exists in this study space.");
+                    return;
+                }
+                refresh();
+            } catch (IOException ex) {
+                Dialogs.error("Could not create text file: " + ex.getMessage());
+            }
+        });
+    }
+
     private void openFile(Path file) {
         if (SpaceStorage.isQuizFile(file)) {
             try {
@@ -122,10 +155,21 @@ public class SpaceController {
             return;
         }
 
+        if (file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".txt")) {
+            try {
+                App.showTextEditor(file, spaceName);
+            } catch (IOException ex) {
+                Dialogs.error("Could not open text file: " + ex.getMessage());
+            }
+            return;
+        }
+
         if (!Desktop.isDesktopSupported()) {
             Dialogs.error("Opening files isn't supported on this system.");
             return;
         }
+
+
         new Thread(() -> {
             try {
                 Desktop.getDesktop().open(file.toFile());
@@ -145,6 +189,21 @@ public class SpaceController {
             refresh();
         } catch (IOException ex) {
             Dialogs.error("Could not delete file: " + ex.getMessage());
+        }
+    }
+
+    // right-click to delte a flash card set
+    private void deleteFlashcardSet(String name) {
+        if (!Dialogs.confirm("Delete \"" + name + "\"?")){ 
+            return;
+        }
+        try {
+            SpaceStorage.deleteFlashcardSet(spaceName, name);
+            refresh();
+        } catch (IOException ex) {
+            Dialogs.error(
+                "Could not delete flashcard set: " + ex.getMessage()
+            );
         }
     }
 
@@ -176,8 +235,97 @@ public class SpaceController {
 
                 fileContainer.getChildren().add(b);
             }
-        } catch (IOException ex) {
+
+            for (Flashcards set : SpaceStorage.listFlashcardSets(spaceName)) {
+                Button button = new Button("Flashcards: " + set.getName());
+                button.setPrefSize(140, 90);
+                button.setWrapText(true);
+
+                button.setOnAction(e -> {
+                    try {
+                        openFlashcardEditor(set, true);
+                    } catch (IOException ex) {
+                        Dialogs.error(
+                            "Could not open flashcards: " + ex.getMessage()
+                        );
+                    }
+                });
+
+                ContextMenu menu = new ContextMenu();
+                MenuItem delete = new MenuItem("Delete");
+                delete.setOnAction(e -> deleteFlashcardSet(set.getName()));
+                menu.getItems().add(delete);
+
+                button.setOnContextMenuRequested(e -> {
+                    menu.show(button, e.getScreenX(), e.getScreenY());
+                    e.consume();
+                });
+
+                fileContainer.getChildren().add(button);
+            }
+        } 
+        catch (IOException ex) {
             Dialogs.error("Could not load files: " + ex.getMessage());
         }
+    }
+
+    // after right clicking it calls this method to create a new empty flashcard set
+    private void createFlashcardSet() {
+        Dialogs.askName(
+            "New Flashcard Set",
+            "Name your flashcard set",
+            ""
+        ).ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a valid flashcard set name.");
+                return;
+            }
+
+            String setName = name.trim();
+
+            try {
+                if (SpaceStorage.hasFlashcardSet(spaceName, setName)) {
+                    Dialogs.error(
+                        "A flashcard set with that name already exists "
+                        + "in this study space."
+                    );
+                    return;
+                }
+
+                Flashcards set = new Flashcards(setName);
+                openFlashcardEditor(set, false);
+
+            } catch (IOException ex) {
+                Dialogs.error(
+                    "Could not create flashcard set: " + ex.getMessage()
+                );
+            }
+        });
+    }
+
+    // after clicking on the flashcard set it will start this method which 
+    // sets up the editor to make and edit the flashcards
+    private void openFlashcardEditor( Flashcards set, 
+        boolean editingExisting) throws IOException {
+
+        FXMLLoader loader = new FXMLLoader(
+            getClass().getResource("flashcard.fxml")
+        );
+
+        Parent editorRoot = loader.load();
+
+        FlashcardController controller = loader.getController();
+        controller.setSpaceName(spaceName);
+        controller.setEditingExisting(editingExisting);
+        controller.setFlashcardSet(set);
+
+        Stage editorWindow = new Stage();
+        editorWindow.initOwner(root.getScene().getWindow());
+        editorWindow.setTitle(spaceName + " - " + set.getName());
+        editorWindow.setScene(new Scene(editorRoot));
+
+        editorWindow.setOnHidden(e -> refresh());
+
+        editorWindow.show();
     }
 }
