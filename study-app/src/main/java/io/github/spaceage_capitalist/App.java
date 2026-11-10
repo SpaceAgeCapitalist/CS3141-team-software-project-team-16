@@ -55,7 +55,7 @@ public class App extends Application {
         stage.setTitle("Edit Quiz - " + quiz.getName());
     }
     
-    static void showQuizTaker(String spaceName, Quiz quiz) throws IOException {
+    public static void showQuizTaker(String spaceName, Quiz quiz) throws IOException {
         FXMLLoader loader = new FXMLLoader(App.class.getResource("quiz_taker.fxml"));
         Parent root = loader.load();
         QuizTakerController controller = loader.getController();
