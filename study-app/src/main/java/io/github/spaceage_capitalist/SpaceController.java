@@ -85,6 +85,8 @@ public class SpaceController {
             transition.play();
         });
 
+        tabs = new ArrayList<>();
+        TextEditors = new HashMap<>();
     }
 
     @FXML
@@ -104,9 +106,6 @@ public class SpaceController {
                 Dialogs.error("Could not create or open study space: " + ex.getMessage());
             }
         });
-
-        tabs = new ArrayList<>();
-        TextEditors = new HashMap<>();
     }
 
     /** Called by App right after this page loads. */
