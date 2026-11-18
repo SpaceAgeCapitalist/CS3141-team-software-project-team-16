@@ -1,10 +1,16 @@
 package io.github.spaceage_capitalist;
 
 import java.io.IOException;
-import javafx.fxml.FXML;
+
+import com.jfoenix.controls.JFXHamburger;
+import com.jfoenix.transitions.hamburger.HamburgerSlideCloseTransition;
+import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 
@@ -12,6 +18,8 @@ public class PrimaryController {
 
     @FXML private BorderPane root;
     @FXML private FlowPane spaceContainer;
+    @FXML private JFXHamburger haml;
+    @FXML private VBox sidePanel;
 
     @FXML
     private void initialize() {
@@ -26,9 +34,28 @@ public class PrimaryController {
             e.consume();
         });
 
+        //hameburger
+        HamburgerSlideCloseTransition transition = new HamburgerSlideCloseTransition(haml);
+        transition.setRate(-1);
+        haml.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
+            boolean opening = !sidePanel.isVisible();
+
+            sidePanel.setVisible(opening);
+            sidePanel.setManaged(opening);
+
+            transition.setRate(opening ? 1 : -1);
+            transition.play();
+        });
+
         refresh();
     }
+    
+    @FXML
+    private void closeApp() {
+        Platform.exit();
+    }
 
+    @FXML
     private void createSpace() {
         Dialogs.askName("New Study Space", "Name your study space", "").ifPresent(name -> {
             if (!SpaceStorage.isValidName(name)) {

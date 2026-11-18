@@ -1,23 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXHamburger?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.control.Label?>
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.Region?>
 
-<BorderPane fx:id="root" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.github.spaceage_capitalist.PrimaryController">
+<BorderPane fx:id="root" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.github.spaceage_capitalist.PrimaryController">
+
+   <!-- title and the hamburger menu -->
    <top>
-      <Label text="My Study Spaces" style="-fx-font-size: 24px;" BorderPane.alignment="CENTER">
-         <padding>
-            <Insets top="20.0" bottom="10.0" />
-         </padding>
-      </Label>
+      <StackPane>
+         <Label style="-fx-font-size: 24px;" 
+                text="My Study Spaces" 
+                StackPane.alignment="CENTER">
+            <padding>
+               <Insets bottom="10.0" top="20.0" />
+            </padding>
+         </Label>
+
+         <JFXHamburger fx:id="haml" 
+                       prefWidth="30.0" 
+                       maxWidth="30.0" 
+                       maxHeight="-Infinity" 
+                       StackPane.alignment="TOP_LEFT">
+            <StackPane.margin>
+               <Insets left="10.0" top="10.0" />
+            </StackPane.margin>
+         </JFXHamburger>
+      </StackPane>
    </top>
+
    <center>
-      <FlowPane fx:id="spaceContainer" hgap="15.0" vgap="15.0">
+      <FlowPane fx:id="spaceContainer" 
+                hgap="15.0" 
+                vgap="15.0">
          <padding>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+            <Insets bottom="20.0" 
+                    left="20.0" 
+                    right="20.0" 
+                    top="10.0" />
          </padding>
       </FlowPane>
    </center>
+   
+   <left>
+      <VBox fx:id="sidePanel"
+            prefWidth="170.0"
+            spacing="10.0"
+            visible="false"
+            managed="false"
+            style="-fx-background-color: #e6e3e3;">
+         <padding>
+            <Insets top="15.0" right="10.0"
+                  bottom="15.0" left="10.0" />
+         </padding>
+
+         <Button text="Create StudySpace"
+               maxWidth="Infinity"
+               onAction="#createSpace" />
+
+         <Region VBox.vgrow="ALWAYS" />
+
+         <Button text="Close App"
+               maxWidth="Infinity"
+               onAction="#closeApp" />
+      </VBox>
+   </left>
 </BorderPane>
