@@ -47,7 +47,7 @@ public class Question {
     public void setAnswer(String answer) { this.answer = answer; }
 
     public boolean isAnswered() { return isAnswered; }
-    public void setAnswered(boolean answered) { isAnswered = answered; }
+    public void setAnswered(boolean answered) { this.isAnswered = answered; }
 
     /** Returns null if the question is complete, otherwise a message saying what is missing. */
     public String validate() {
@@ -132,9 +132,5 @@ public class Question {
             throw new IllegalArgumentException("Missing " + key);
         }
         return v;
-    }
-    public Object getAnswers() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAnswers'");
     }
 }
