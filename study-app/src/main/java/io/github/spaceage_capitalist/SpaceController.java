@@ -4,6 +4,9 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -11,6 +14,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
@@ -24,8 +29,12 @@ public class SpaceController {
     @FXML private BorderPane root;
     @FXML private Label titleLabel;
     @FXML private FlowPane fileContainer;
+    @FXML private TabPane tabPane;
+    @FXML private Tab spaceTab;
 
     private String spaceName;
+    private ArrayList<TabController> tabs;
+    private HashMap<String, TextEditor> TextEditors;
 
     @FXML
     private void initialize() {
@@ -54,6 +63,9 @@ public class SpaceController {
             menu.show(root, e.getScreenX(), e.getScreenY());
             e.consume();
         });
+
+        tabs = new ArrayList<>();
+        TextEditors = new HashMap<>();
     }
 
     /** Called by App right after this page loads. */
@@ -65,6 +77,25 @@ public class SpaceController {
 
     @FXML
     private void goHome() throws IOException {
+        // Fires when the user clicks the "Back to Home" button
+
+        // Close all tabs
+        int numTabs = tabs.size();
+        for (TabController tab : tabs) {
+            boolean willClose = tab.getCloseConsent();
+
+            if(!willClose) {
+                // Return if any tabs refuse to close
+                return;
+            }
+        }
+
+        // All closes were consented to
+        while(tabs.size() > 0) {
+            tabs.get(0).closeTab();
+        }
+
+        // Close
         App.setRoot("primary", "Study App");
     }
 
@@ -156,7 +187,16 @@ public class SpaceController {
 
         if (file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".txt")) {
             try {
-                App.showTextEditor(file, spaceName);
+
+                if(TextEditors.get(file.getFileName().toString()) != null) {
+                    // Select the existing editor
+                    TextEditors.get(file.getFileName().toString()).focusTab();
+                } else {
+                    TextEditor newEditor = new TextEditor(file, this, tab -> {tabs.remove(tab); TextEditors.remove(file.getFileName().toString());}, true);
+                    tabs.add(newEditor);
+                    TextEditors.put(file.getFileName().toString(), newEditor);
+                }
+                
             } catch (IOException ex) {
                 Dialogs.error("Could not open text file: " + ex.getMessage());
             }
@@ -326,5 +366,13 @@ public class SpaceController {
         editorWindow.setOnHidden(e -> refresh());
 
         editorWindow.show();
+    }
+
+    public Tab getSpaceTab() {
+        return spaceTab;
+    }
+
+    public TabPane getTabPane() {
+        return tabPane;
     }
 }

@@ -7,6 +7,9 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+
 
 <BorderPane fx:id="root" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.github.spaceage_capitalist.SpaceController">
    <top>
@@ -17,15 +20,23 @@
       </Label>
    </top>
    <center>
-      <ScrollPane fitToWidth="true" fitToHeight="true">
-         <content>
-            <FlowPane fx:id="fileContainer" hgap="15.0" vgap="15.0">
-               <padding>
-                  <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
-               </padding>
-            </FlowPane>
-         </content>
-      </ScrollPane>
+      <TabPane fx:id="tabPane" tabClosingPolicy="ALL_TABS">
+         <tabs>
+            <Tab fx:id="spaceTab" text="space" closable="false">
+               <content>
+                  <ScrollPane fitToHeight="true" fitToWidth="true">
+                     <content>
+                        <FlowPane fx:id="fileContainer" hgap="15.0" vgap="15.0">
+                           <padding>
+                              <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+                           </padding>
+                        </FlowPane>
+                     </content>
+                  </ScrollPane>
+               </content>
+            </Tab>
+         </tabs>
+      </TabPane>
    </center>
    <bottom>
       <HBox alignment="BOTTOM_RIGHT">
