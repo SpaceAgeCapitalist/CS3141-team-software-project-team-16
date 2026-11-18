@@ -5,6 +5,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
+
+import com.jfoenix.controls.JFXHamburger;
+import com.jfoenix.transitions.hamburger.HamburgerSlideCloseTransition;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -13,17 +17,21 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.input.MouseEvent;
 
 public class SpaceController {
 
     @FXML private BorderPane root;
     @FXML private Label titleLabel;
     @FXML private FlowPane fileContainer;
+    @FXML private JFXHamburger haml;
+    @FXML private VBox sidePanel;
 
     private String spaceName;
 
@@ -54,6 +62,39 @@ public class SpaceController {
             menu.show(root, e.getScreenX(), e.getScreenY());
             e.consume();
         });
+
+        //hameburger
+        HamburgerSlideCloseTransition transition = new HamburgerSlideCloseTransition(haml);
+        transition.setRate(-1);
+        haml.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
+            boolean opening = !sidePanel.isVisible();
+
+            sidePanel.setVisible(opening);
+            sidePanel.setManaged(opening);
+
+            transition.setRate(opening ? 1 : -1);
+            transition.play();
+        });
+
+    }
+
+    @FXML
+    private void createSpace() {
+        Dialogs.askName("New Study Space", "Name your study space", "").ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
+                return;
+            }
+            try {
+                if (!SpaceStorage.createSpace(name)) {
+                    Dialogs.error("A study space with that name already exists.");
+                    return;
+                }
+                App.showSpace(name);
+            } catch (IOException ex) {
+                Dialogs.error("Could not create or open study space: " + ex.getMessage());
+            }
+        });
     }
 
     /** Called by App right after this page loads. */
@@ -66,6 +107,11 @@ public class SpaceController {
     @FXML
     private void goHome() throws IOException {
         App.setRoot("primary", "Study App");
+    }
+
+    @FXML
+    private void closeApp() {
+        Platform.exit();
     }
 
     private void addFile() {
