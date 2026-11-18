@@ -318,6 +318,80 @@ public class SpaceStorage {
         writeFlashcardSets(space, updatedSets);
         flashcardSets.put(space, updatedSets);
     }
+    //RENAMING FILES CODE
+
+    /** The file name without its extension (".quiz" included), e.g. "notes.txt" -> "notes". */
+    public static String baseName(Path file) {
+        String n = file.getFileName().toString();
+        int dot = n.lastIndexOf('.');
+        return dot > 0 ? n.substring(0, dot) : n;
+    }
+
+    //study space
+    /** Renames a study space. Returns false if another space already has that name. */
+    public static boolean renameSpace(String oldName, String newName) throws IOException {
+        String name = newName.trim();
+        if (!moveIfFree(ROOT.resolve(oldName), ROOT.resolve(name))) return false;
+        // The flashcard cache is keyed by space name, so drop it; it reloads from the moved folder.
+        flashcardSets.remove(oldName);
+        flashcardSets.remove(name);
+        return true;
+    }
+
+    //File quiz
+    /** Renames a file or quiz, keeping its extension. Returns false if that name is already taken. */
+    public static boolean renameFile(Path file, String newName) throws IOException {
+        String old = file.getFileName().toString();
+        int dot = old.lastIndexOf('.');
+        String ext = dot > 0 ? old.substring(dot) : "";
+        return moveIfFree(file, file.resolveSibling(newName.trim() + ext));
+    }
+
+    //Flashcards
+    /** Renames a flashcard set. Returns false if another set in the space already has that name. */
+    public static boolean renameFlashcardSet(String space, String oldName, String newName)
+            throws IOException {
+
+        String name = newName.trim();
+        Map<String, Flashcards> sets = getSetsForSpace(space);
+        Flashcards old = sets.get(oldName);
+
+        if (old == null) {
+            throw new IOException("This flashcard set no longer exists.");
+        }
+        if (name.equals(oldName)) return true;
+        if (sets.containsKey(name)) return false;
+
+        Flashcards renamed = new Flashcards(name);
+        for (int i = 0; i < old.getCardCount(); i++) {
+            renamed.addCard(old.getCard(i).getFront(), old.getCard(i).getBack());
+        }
+
+        Map<String, Flashcards> updatedSets = new HashMap<>(sets);
+        updatedSets.remove(oldName);
+        updatedSets.put(name, renamed);
+
+        writeFlashcardSets(space, updatedSets);
+        flashcardSets.put(space, updatedSets);
+        return true;
+    }
+
+    /** Moves source to target unless target is a different, existing file. Handles case-only renames. */
+    private static boolean moveIfFree(Path source, Path target) throws IOException {
+        if (source.equals(target)) return true;
+        if (Files.exists(target)) {
+            if (!Files.isSameFile(source, target)) return false;
+            // Same file under a different capitalisation (Windows): go through a temporary name.
+            Path temp = source.resolveSibling(".rename-" + System.nanoTime());
+            Files.move(source, temp);
+            Files.move(temp, target);
+            return true;
+        }
+        Files.move(source, target);
+        return true;
+    }
+
+
     //Quizzes
     // A quiz is stored as one "<name>.quiz" file inside its study space folder.
 

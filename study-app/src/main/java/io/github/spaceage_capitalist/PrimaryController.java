@@ -7,11 +7,15 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
 
 public class PrimaryController {
 
     @FXML private BorderPane root;
     @FXML private FlowPane spaceContainer;
+
+    private ContextMenu openMenu;
 
     @FXML
     private void initialize() {
@@ -22,12 +26,47 @@ public class PrimaryController {
         menu.getItems().add(newSpace);
 
         root.setOnContextMenuRequested(e -> {
-            menu.show(root, e.getScreenX(), e.getScreenY());
+            showMenu(menu, root, e.getScreenX(), e.getScreenY());
             e.consume();
         });
+        root.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> hideMenu());
 
         refresh();
     }
+
+    //helper methodds for above code blocks
+    private void showMenu(ContextMenu menu, Node owner, double x, double y) {
+        hideMenu();
+        menu.show(owner, x, y);
+        openMenu = menu;
+    }
+
+    private void hideMenu() {
+        if (openMenu != null) {
+            openMenu.hide();
+            openMenu = null;
+        }
+    }
+
+    private void renameSpace(String oldName) {
+        Dialogs.askName("Rename Study Space", "Enter a new name for \"" + oldName + "\"", oldName)
+                .ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
+                return;
+            }
+            try {
+                if (!SpaceStorage.renameSpace(oldName, name)) {
+                    Dialogs.error("A study space with that name already exists.");
+                    return;
+                }
+                refresh();
+            } catch (IOException ex) {
+                Dialogs.error("Could not rename study space: " + ex.getMessage());
+            }
+        });
+    }
+
 
     private void createSpace() {
         Dialogs.askName("New Study Space", "Name your study space", "").ifPresent(name -> {
@@ -73,13 +112,15 @@ public class PrimaryController {
                     }
                 });
 
-                // Right-click a folder -> Delete
+                // Right-click a folder -> Rename / Delete (*adjusted*)
                 ContextMenu menu = new ContextMenu();
+                MenuItem rename = new MenuItem("Rename");
+                rename.setOnAction(e -> renameSpace(name));
                 MenuItem delete = new MenuItem("Delete");
                 delete.setOnAction(e -> deleteSpace(name));
-                menu.getItems().add(delete);
+                menu.getItems().addAll(rename, delete);
                 b.setOnContextMenuRequested(e -> {
-                    menu.show(b, e.getScreenX(), e.getScreenY());
+                    showMenu(menu, b, e.getScreenX(), e.getScreenY());
                     e.consume();
                 });
 
