@@ -87,6 +87,7 @@ public class SpaceController {
             transition.play();
         });
 
+        // Tab handling  containers
         tabs = new ArrayList<>();
         TextEditors = new HashMap<>();
     }

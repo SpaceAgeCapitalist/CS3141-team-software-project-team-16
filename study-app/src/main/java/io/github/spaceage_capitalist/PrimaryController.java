@@ -55,7 +55,7 @@ public class PrimaryController {
         refresh();
     }
 
-    //helper methodds for above code blocks
+    //helper methods for above code blocks
     private void showMenu(ContextMenu menu, Node owner, double x, double y) {
         hideMenu();
         menu.show(owner, x, y);
@@ -67,6 +67,11 @@ public class PrimaryController {
             openMenu.hide();
             openMenu = null;
         }
+    }
+  
+    @FXML
+    private void closeApp() {
+        Platform.exit();
     }
 
     private void renameSpace(String oldName) {
@@ -86,12 +91,6 @@ public class PrimaryController {
                 Dialogs.error("Could not rename study space: " + ex.getMessage());
             }
         });
-    }
-
-    
-    @FXML
-    private void closeApp() {
-        Platform.exit();
     }
 
     @FXML
