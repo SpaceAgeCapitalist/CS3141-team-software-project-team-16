@@ -28,6 +28,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 
 public class SpaceController {
@@ -41,6 +42,7 @@ public class SpaceController {
     @FXML private Tab spaceTab;
 
     private String spaceName;
+    private ContextMenu openMenu; // the right-click menu currently on screen, if any
     private ArrayList<TabController> tabs;
     private HashMap<String, TextEditor> TextEditors;
 
@@ -68,7 +70,7 @@ public class SpaceController {
         menu.getItems().add(createTextFile);
 
         root.setOnContextMenuRequested(e -> {
-            menu.show(root, e.getScreenX(), e.getScreenY());
+            showMenu(menu, root, e.getScreenX(), e.getScreenY());
             e.consume();
         });
 
@@ -106,6 +108,23 @@ public class SpaceController {
                 Dialogs.error("Could not create or open study space: " + ex.getMessage());
             }
         });
+
+        // Any click on the page closes an open right-click menu so it doesn't stay on page
+        root.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> hideMenu());
+    }
+
+    //helper methods for the root.setOnContextMenu.... block above
+    private void showMenu(ContextMenu menu, Node owner, double x, double y) {
+        hideMenu();
+        menu.show(owner, x, y);
+        openMenu = menu;
+    }
+
+    private void hideMenu() {
+        if (openMenu != null) {
+            openMenu.hide();
+            openMenu = null;
+        }
     }
 
     /** Called by App right after this page loads. */
@@ -291,6 +310,46 @@ public class SpaceController {
         }
     }
 
+    //renaming files/flashcards methods
+    private void renameFile(Path file) {
+        Dialogs.askName("Rename", "Enter a new name (the file type stays the same)",
+                SpaceStorage.baseName(file)).ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
+                return;
+            }
+            
+            try {
+                if (!SpaceStorage.renameFile(file, name)) {
+                    Dialogs.error("A file with that name already exists in this study space.");
+                    return;
+                }
+                refresh();
+            } 
+            catch (IOException ex) {
+                Dialogs.error("Could not rename: " + ex.getMessage());
+            }
+        });
+    }
+
+    private void renameFlashcardSet(String oldName) {
+        Dialogs.askName("Rename Flashcard Set", "Enter a new name", oldName).ifPresent(name -> {
+            if (!SpaceStorage.isValidName(name)) {
+                Dialogs.error("Please enter a name that doesn't use these characters: \\ / : * ? \" < > |");
+                return;
+            }
+            try {
+                if (!SpaceStorage.renameFlashcardSet(spaceName, oldName, name)) {
+                    Dialogs.error("A flashcard set with that name already exists in this study space.");
+                    return;
+                }
+                refresh();
+            } catch (IOException ex) {
+                Dialogs.error("Could not rename flashcard set: " + ex.getMessage());
+            }
+        });
+    }
+
     private void refresh() {
         fileContainer.getChildren().clear();
         try {
@@ -309,11 +368,15 @@ public class SpaceController {
                     edit.setOnAction(e -> editQuiz(file));
                     menu.getItems().add(edit);
                 }
+                MenuItem rename = new MenuItem("Rename");    //Rename addition
+                rename.setOnAction(e -> renameFile(file));
+                menu.getItems().add(rename);
+
                 MenuItem delete = new MenuItem("Delete");
                 delete.setOnAction(e -> deleteFile(file));
                 menu.getItems().add(delete);
                 b.setOnContextMenuRequested(e -> {
-                    menu.show(b, e.getScreenX(), e.getScreenY());
+                    showMenu(menu, b, e.getScreenX(), e.getScreenY());
                     e.consume();
                 });
 
@@ -329,26 +392,27 @@ public class SpaceController {
                     try {
                         openFlashcardEditor(set, true);
                     } catch (IOException ex) {
-                        Dialogs.error(
-                            "Could not open flashcards: " + ex.getMessage()
-                        );
+                        Dialogs.error("Could not open flashcards: " + ex.getMessage());
                     }
                 });
 
                 ContextMenu menu = new ContextMenu();
+                MenuItem rename = new MenuItem("Rename");     //rename addition
+                rename.setOnAction(e -> renameFlashcardSet(set.getName()));
+                menu.getItems().add(rename);
+
                 MenuItem delete = new MenuItem("Delete");
                 delete.setOnAction(e -> deleteFlashcardSet(set.getName()));
                 menu.getItems().add(delete);
 
                 button.setOnContextMenuRequested(e -> {
-                    menu.show(button, e.getScreenX(), e.getScreenY());
+                    showMenu(menu, button, e.getScreenX(), e.getScreenY());
                     e.consume();
                 });
 
                 fileContainer.getChildren().add(button);
             }
-        } 
-        catch (IOException ex) {
+        } catch (IOException ex) {
             Dialogs.error("Could not load files: " + ex.getMessage());
         }
     }
